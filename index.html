@@ -111,6 +111,10 @@ h3 small{font:500 13px var(--f-body);color:var(--muted);margin-left:6px}
 .modeinfo:empty{display:none}
 .playbox{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:13.5px;font-weight:600;color:var(--muted)}
 .playbox .btn{font-size:16px;padding:11px 26px}
+.mact{display:flex;align-items:center;gap:10px}
+.mact #live{display:inline-flex;gap:8px}
+.mact #live[hidden]{display:none}
+#bStop:hover{border-color:var(--bad);color:var(--bad)}
 .status{margin-top:14px;padding:9px 14px;border-radius:12px;background:var(--surface-2);font-size:13.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center}
 .status b{color:var(--fg)}
 .status .keys{margin-left:auto;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
@@ -212,7 +216,7 @@ textarea.src{width:100%;min-height:230px;resize:vertical;border:1px solid var(--
       <div class="verdict" id="vTaper"></div>
     </div>
     <div class="stage">
-      <div class="meta"><span id="meta"></span><a data-go="texte">Changer le texte →</a></div>
+      <div class="meta"><span id="meta"></span><span class="mact"><span id="live" hidden><button class="btn sm" id="bRestart" title="Échap">↻ Recommencer</button> <button class="btn sm" id="bStop">■ Arrêter</button></span><a data-go="texte" id="chg">Changer le texte →</a></span></div>
       <div class="tbox" id="tbox">
         <div class="view"><div class="flow" id="flow"></div></div>
         <div class="over"><span>Cliquez ici pour reprendre</span></div>
@@ -534,6 +538,7 @@ function updateLive(){
   }
  }
  $('#vTaper').innerHTML=h+`<div class="sub">${sub}</div>`;
+ const playing=!!G.t0&&!G.over;$('#live').hidden=!playing;$('#chg').hidden=playing;
  updateLanes(st);
 }
 
@@ -557,6 +562,12 @@ function renderCard(){
  $('#status').innerHTML=`<span><b>${MODE_ICON[S.mode]} ${MODE_NAME[S.mode]}</b> — ${MODE_TXT[S.mode]}</span>
   <span class="keys"><span class="kbd">Échap</span> recommence${S.mode==='sans'?'':` · <span class="kbd">⌥ ⌫</span> efface un mot`} · <span class="kbd">Entrée</span> passage suivant (à la fin)</span>`;
 }
+
+// Recommencer : même passage, prêt à taper tout de suite. Arrêter : retour à l'écran de départ.
+// Dans les deux cas, l'essai abandonné n'est pas enregistré (ni historique, ni fantôme).
+['bRestart','bStop'].forEach(id=>$('#'+id).addEventListener('mousedown',e=>e.preventDefault()));
+$('#bRestart').onclick=()=>{newGame(true);tbox.classList.add('ready');focusIn()};
+$('#bStop').onclick=()=>{newGame(true);inp.blur()};
 
 /* ---------- Après la partie ---------- */
 function badWords(){
