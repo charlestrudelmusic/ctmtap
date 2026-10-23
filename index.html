@@ -1,0 +1,837 @@
+<!doctype html>
+<html lang="fr-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ctmTAP">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>ctmTAP</title>
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%232f5bf0'/%3E%3Ctext x='32' y='45' font-family='Arial' font-weight='700' font-size='34' fill='white' text-anchor='middle'%3ET%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef1f5; --surface:#ffffff; --surface-2:#f4f6f9; --line:#dde2ea; --road:#e4e8ef; --dash:#c6cdd9;
+  --fg:#131926; --muted:#5d6779;
+  --t1:#2f5bf0; --t2:#7c3aed; --t3:#d97a00; --t4:#d1303a;
+  --ok:#14875a; --ok-soft:#dcf2e6; --bad:#cf3a31; --bad-soft:#fbe4e1;
+  --hare:#f0a20f; --ghost:#7b5cff; --on:#ffffff;
+  --shadow:0 1px 2px rgba(19,25,38,.05),0 12px 30px -20px rgba(19,25,38,.3);
+  --f-display:'Sora',system-ui,-apple-system,sans-serif;
+  --f-body:'Manrope',system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c0f15; --surface:#151922; --surface-2:#1b202b; --line:#272d3a; --road:#20262f; --dash:#3a4252;
+  --fg:#e9edf5; --muted:#959eb0; --t1:#7d97ff; --t2:#b18bff; --t3:#ffad3d; --t4:#ff6670;
+  --ok:#45c98a; --ok-soft:#14301f; --bad:#ff6c61; --bad-soft:#3a1c1b; --on:#0c0f15;
+  --shadow:0 12px 30px -20px rgba(0,0,0,.7); color-scheme:dark}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:500 16px/1.5 var(--f-body);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+button,input,textarea{font-family:inherit;font-variant-numeric:tabular-nums}
+button{cursor:pointer}
+
+/* Barre */
+.bar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);border-bottom:1px solid var(--line)}
+.bar-in{max-width:1000px;margin:0 auto;padding:10px max(16px,env(safe-area-inset-left));display:flex;align-items:center;justify-content:space-between;gap:12px}
+.logo{display:flex;align-items:center;gap:10px;font:700 19px var(--f-display);letter-spacing:-.02em;color:var(--fg);text-decoration:none}
+.logo .mk{width:32px;height:32px;border-radius:10px;background:var(--t1);display:grid;place-items:center;color:var(--on)}
+.logo .mk svg{width:19px;height:19px}
+.logo b{color:var(--t1)}
+.tabs{display:flex;gap:6px}
+.tab{--c:var(--t1);display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:8px 15px 8px 12px;border-radius:999px;font-weight:700;font-size:14px;transition:background .15s,color .15s,border-color .15s}
+.tab svg{width:17px;height:17px}
+.tab:hover{color:var(--fg)}
+.tab.on{background:var(--c);border-color:var(--c);color:var(--on)}
+
+/* Scènes */
+main{max-width:1000px;margin:0 auto;padding:18px max(16px,env(safe-area-inset-left)) 60px}
+.scene{display:none}.scene.on{display:block}
+.head{background:color-mix(in srgb,var(--tab) 11%,var(--surface));border-radius:24px;padding:24px 26px 22px}
+h1{font:700 clamp(25px,3.6vw,36px)/1.15 var(--f-display);letter-spacing:-.025em;margin:0 0 16px}
+h1 em{font-style:normal;color:var(--tab)}
+.ask{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;font-weight:600;color:var(--muted);font-size:15px}
+.grp{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.seg{display:inline-flex;flex-wrap:wrap;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px}
+.seg button{border:0;background:none;color:var(--muted);font-weight:700;font-size:13.5px;padding:6px 12px;border-radius:999px;white-space:nowrap}
+.seg button:hover{color:var(--fg)}
+.seg button.on{background:var(--tab);color:var(--on)}
+.verdict{margin-top:18px;font-size:clamp(17px,2.1vw,21px);font-weight:600;line-height:1.4;letter-spacing:-.005em}
+.verdict b{color:var(--tab);font-weight:800}
+.verdict b.ok{color:var(--ok)}.verdict b.bad{color:var(--bad)}
+.verdict .sub{margin-top:5px;font-size:14.5px;font-weight:500;color:var(--muted)}
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:22px 24px;margin-top:14px}
+.hint{margin-top:14px;font-size:13px;color:var(--muted)}
+.kbd{display:inline-block;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:0 6px;font-size:12px;font-weight:700;background:var(--surface-2);color:var(--fg)}
+h3{font:700 15px var(--f-display);margin:22px 0 10px;letter-spacing:-.01em}
+h3 small{font:500 13px var(--f-body);color:var(--muted);margin-left:6px}
+.btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface-2);color:var(--fg);font-weight:700;font-size:14px;padding:9px 16px;border-radius:999px}
+.btn:hover{border-color:var(--tab)}
+.btn.pri{background:var(--tab);border-color:var(--tab);color:var(--on)}
+.btn.sm{padding:6px 12px;font-size:13px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:999px;font-weight:700;font-size:13.5px}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.chip{display:inline-block;padding:4px 11px;border-radius:999px;background:var(--bad-soft);color:var(--bad);font-weight:700;font-size:14px}
+
+/* Zone de frappe */
+.meta{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 14px;align-items:center;font-size:13.5px;color:var(--muted);margin-bottom:12px;font-weight:600}
+.meta a{color:var(--t2);font-weight:700;text-decoration:none;cursor:pointer}
+.tbox{position:relative;cursor:text;border-radius:18px;padding:16px 20px;background:var(--surface-2);border:2px solid transparent;transition:border-color .15s}
+.tbox.focus{border-color:color-mix(in srgb,var(--tab) 45%,transparent)}
+.view{--lh:1.8em;font-size:clamp(19px,2.4vw,24px);line-height:var(--lh);height:calc(var(--lh) * 4);overflow:hidden;position:relative}
+.flow{position:relative;white-space:pre-wrap;overflow-wrap:break-word;transition:transform .18s ease;font-weight:500}
+.flow span{color:color-mix(in srgb,var(--muted) 72%,transparent);border-radius:3px}
+.flow span.ok{color:var(--fg)}
+.flow span.x{color:var(--bad);background:var(--bad-soft)}
+.flow span.fx{text-decoration:underline dotted var(--bad);text-decoration-thickness:2px;text-underline-offset:6px}
+.flow span.cur{box-shadow:inset 2px 0 0 var(--tab);animation:blink 1.1s steps(1) infinite}
+.flow span.gh{background:color-mix(in srgb,var(--opp,var(--hare)) 40%,transparent);box-shadow:inset 0 -3px 0 var(--opp,var(--hare))}
+.flow span.cur.gh{box-shadow:inset 2px 0 0 var(--tab),inset 0 -3px 0 var(--opp,var(--hare))}
+.typing .flow span.cur,.tbox:not(.focus) .flow span.cur{animation:none}
+@keyframes blink{50%{box-shadow:inset 2px 0 0 transparent}}
+.over{position:absolute;inset:0;display:grid;place-items:center;border-radius:16px;background:color-mix(in srgb,var(--surface-2) 55%,transparent);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);font-weight:700;opacity:0;pointer-events:none;transition:opacity .15s}
+.over span{background:var(--surface);border:1px solid var(--line);padding:8px 16px;border-radius:999px;box-shadow:var(--shadow)}
+.tbox:not(.focus):not(.done) .over{opacity:1}
+.start{position:absolute;inset:0;z-index:2;border-radius:16px;background:color-mix(in srgb,var(--surface-2) 72%,transparent);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:10px;transition:opacity .15s;overflow:auto}
+.tbox.ready .start,.tbox.typing .start,.tbox.done .start{opacity:0;pointer-events:none}
+.card{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--tab);border-radius:16px;box-shadow:var(--shadow);padding:12px 18px;max-width:700px;width:100%;display:grid;gap:7px;cursor:default}
+.card .mt{font:700 17px/1.2 var(--f-display);letter-spacing:-.01em}
+.card .mt span{color:var(--tab)}
+.card p{margin:0;font-size:14.5px;line-height:1.45}
+.card .ft{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;font-size:13px;color:var(--muted);font-weight:600}
+.card .ft b{color:var(--fg)}
+.card .ft .note{color:var(--t3)}
+.card .go{margin-left:auto}
+.modeinfo{flex-basis:100%;margin:0 0 4px;padding:9px 14px;border-radius:12px;background:var(--surface);border-left:4px solid var(--tab);color:var(--fg);font-size:14.5px;font-weight:500;line-height:1.45}
+.modeinfo.warn{border-left-color:var(--t3)}
+.modeinfo:empty{display:none}
+.playbox{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:13.5px;font-weight:600;color:var(--muted)}
+.playbox .btn{font-size:16px;padding:11px 26px}
+.status{margin-top:14px;padding:9px 14px;border-radius:12px;background:var(--surface-2);font-size:13.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center}
+.status b{color:var(--fg)}
+.status .keys{margin-left:auto;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
+#inp{position:absolute;left:0;top:0;width:1px;height:1px;opacity:0;border:0;padding:0;resize:none;pointer-events:none;caret-color:transparent}
+.shake{animation:shake .25s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+/* Voies */
+.lanes{display:grid;gap:10px;margin-top:18px}
+.lane{display:grid;grid-template-columns:92px 1fr 132px;align-items:center;gap:14px}
+.who{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px}
+.who i{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.track{position:relative;height:14px;border-radius:999px;background:var(--road);overflow:hidden}
+.fill{position:absolute;inset:0 auto 0 0;width:0;border-radius:999px;background:var(--c);transition:width .2s linear}
+.ticks{position:absolute;inset:0}
+.ticks.hid{display:none}
+.tk{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--bad)}
+.val{text-align:right;line-height:1.15}
+.val b{font:700 17px var(--f-display)}
+.val small{display:block;color:var(--muted);font-size:12px;font-weight:600}
+
+/* Résultats */
+.after{display:none;margin-top:22px;padding-top:18px;border-top:1px dashed var(--line)}
+.after.on{display:block}
+.after-top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.chart{width:100%;height:auto;display:block}
+.chart text{font-family:var(--f-body);font-size:12px;font-weight:600;fill:var(--muted)}
+.words{display:flex;flex-wrap:wrap;gap:6px}
+.empty{color:var(--muted);text-align:center;padding:26px 10px;font-weight:600}
+
+/* Texte */
+.tfield{display:flex;gap:10px;align-items:center;margin-bottom:12px;font-weight:700;color:var(--muted);font-size:14px}
+.in{border:1px solid var(--line);background:var(--surface-2);color:var(--fg);border-radius:12px;padding:9px 12px;font-weight:600;font-size:15px;flex:1;min-width:0}
+.in:focus,textarea.src:focus{outline:2px solid color-mix(in srgb,var(--tab) 50%,transparent);outline-offset:1px}
+textarea.src{width:100%;min-height:230px;resize:vertical;border:1px solid var(--line);background:var(--surface-2);color:var(--fg);border-radius:16px;padding:14px 16px;font-size:15px;line-height:1.6;font-weight:500}
+.drop textarea.src{outline:3px dashed var(--t2);outline-offset:2px}
+.msg{font-size:13.5px;font-weight:700;color:var(--t2)}
+.msg.bad{color:var(--bad)}
+.tog{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:7px 14px;font-weight:700;font-size:13.5px}
+.tog.on{background:color-mix(in srgb,var(--tab) 13%,var(--surface));border-color:var(--tab);color:var(--tab)}
+.tog.on::before{content:'✓ '}
+.prev{margin-top:12px;padding:14px 16px;border-radius:16px;background:var(--surface-2);font-size:15px;line-height:1.65;max-height:128px;overflow:hidden;position:relative;color:var(--fg)}
+.prev::after{content:'';position:absolute;left:0;right:0;bottom:0;height:40px;background:linear-gradient(transparent,var(--surface-2))}
+
+/* Progrès */
+#hist{position:relative}
+.tip{position:absolute;pointer-events:none;background:var(--fg);color:var(--bg);padding:8px 11px;border-radius:12px;font-size:13px;line-height:1.35;transform:translate(-50%,calc(-100% - 12px));opacity:0;transition:opacity .1s;white-space:nowrap;z-index:2}
+.tip.on{opacity:1}
+.tip small{opacity:.75;font-size:12px}
+.keys{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:10px}
+.key{border:1px solid var(--line);border-radius:16px;padding:12px;display:grid;grid-template-columns:auto 1fr;gap:5px 12px;align-items:center}
+.cap{grid-row:span 3;min-width:46px;height:46px;padding:0 8px;border-radius:10px;border:1px solid var(--line);border-bottom-width:3px;display:grid;place-items:center;font:700 20px var(--f-display);background:var(--surface-2)}
+.cap.sp{font-size:12px;font-family:var(--f-body)}
+.key b{font:700 16px var(--f-display);color:var(--bad)}
+.key small{font-size:12px;color:var(--muted);font-weight:600}
+.mini{height:6px;border-radius:999px;background:var(--road);overflow:hidden}
+.mini i{display:block;height:100%;background:var(--bad);border-radius:999px}
+
+@media (max-width:680px){
+  .status .keys{display:none}
+  .card .go{margin-left:0}
+  .tab:not(.on) .lb{display:none}
+  .tab{padding:8px 11px}
+  .logo .nm{display:none}
+  .head{padding:20px 18px}
+  .stage{padding:18px 16px}
+  .lane{grid-template-columns:66px 1fr 92px;gap:10px}
+}
+@media (prefers-reduced-motion:reduce){
+  .flow,.fill{transition:none}
+  .shake{animation:none}
+  .flow span.cur{animation:none}
+}
+</style>
+</head>
+<body>
+
+<header class="bar"><div class="bar-in">
+  <a class="logo" href="#taper"><span class="mk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 13h.01M18 13h.01M9 13h6M8 16.5h8"/></svg></span><span class="nm">ctm<b>TAP</b></span></a>
+  <nav class="tabs">
+    <button class="tab" data-t="taper" style="--c:var(--t1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M8 15h8"/></svg><span class="lb">Taper</span></button>
+    <button class="tab" data-t="texte" style="--c:var(--t2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg><span class="lb">Texte</span></button>
+    <button class="tab" data-t="progres" style="--c:var(--t3)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/></svg><span class="lb">Progrès</span></button>
+  </nav>
+</div></header>
+
+<main>
+  <!-- TAPER -->
+  <section class="scene" id="s-taper" style="--tab:var(--t1)">
+    <div class="head">
+      <h1>À quelle vitesse <em>je tape ?</em></h1>
+      <div class="ask">
+        <span class="grp">Mode de jeu <div class="seg" id="segMode"></div></span>
+        <div class="modeinfo" id="modeInfo"></div>
+        <span class="grp">La partie finit <div class="seg" id="segDur"></div></span>
+        <span class="grp">Contre <div class="seg" id="segOpp"></div><div class="seg" id="segGk"></div><div class="seg" id="segHw"></div></span>
+        <div class="modeinfo" id="oppInfo"></div>
+      </div>
+      <div class="verdict" id="vTaper"></div>
+    </div>
+    <div class="stage">
+      <div class="meta"><span id="meta"></span><a data-go="texte">Changer le texte →</a></div>
+      <div class="tbox" id="tbox">
+        <div class="view"><div class="flow" id="flow"></div></div>
+        <div class="over"><span>Cliquez ici pour reprendre</span></div>
+        <div class="start" id="start"></div>
+        <textarea id="inp" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Zone de frappe"></textarea>
+      </div>
+      <div class="lanes" id="lanes"></div>
+      <div class="status" id="status"></div>
+      <div class="after" id="after"></div>
+    </div>
+  </section>
+
+  <!-- TEXTE -->
+  <section class="scene" id="s-texte" style="--tab:var(--t2)">
+    <div class="head">
+      <h1>Sur quoi <em>je pratique ?</em></h1>
+      <div class="ask">
+        <span class="grp">Exemples <div class="seg" id="segEx"></div></span>
+        <span class="grp">Passage <div class="seg" id="segLen"></div></span>
+        <span class="grp">pris <div class="seg" id="segFrom"></div></span>
+      </div>
+      <div class="verdict" id="vTexte"></div>
+    </div>
+    <div class="stage" id="drop">
+      <div class="tfield"><label for="ttl">Titre</label><input id="ttl" class="in" autocomplete="off" placeholder="Sans titre"></div>
+      <textarea id="src" class="src" spellcheck="false" placeholder="Collez votre texte ici (⌘V), ou glissez un fichier .txt, .pdf ou .docx sur cette zone."></textarea>
+      <div class="row">
+        <button class="btn" id="bImport">📄 Importer un fichier…</button>
+        <input type="file" id="fileIn" accept=".txt,.md,.pdf,.docx,.html,.htm,.csv,text/plain,application/pdf" hidden>
+        <button class="btn" id="bPaste">📋 Coller</button>
+        <button class="btn" id="bClear">Effacer</button>
+        <span class="msg" id="msg"></span>
+      </div>
+      <h3>Comment le texte sera tapé</h3>
+      <div class="row" id="togs" style="margin-top:0"></div>
+      <div class="prev" id="prev"></div>
+      <div class="row"><button class="btn pri" id="bGo">Pratiquer ce texte →</button></div>
+      <div class="hint">Le texte reste sur cet ordinateur : rien n'est envoyé nulle part.</div>
+    </div>
+  </section>
+
+  <!-- PROGRÈS -->
+  <section class="scene" id="s-progres" style="--tab:var(--t3)">
+    <div class="head">
+      <h1>Est-ce que <em>je m'améliore ?</em></h1>
+      <div class="ask">
+        <span class="grp">Afficher <div class="seg" id="segPf"></div></span>
+        <button class="btn sm" id="bWipe">Effacer l'historique</button>
+      </div>
+      <div class="verdict" id="vProg"></div>
+    </div>
+    <div class="stage">
+      <h3 style="margin-top:0">Vitesse et précision, test par test <small>les 40 derniers</small></h3>
+      <div id="hist"></div>
+      <div class="hint">Touchez un point pour voir le détail. Cercle rouge vide = partie perdue. Barres du bas : précision (vert ≥ 95 %, rouge &lt; 90 %).</div>
+      <h3>Les touches qui accrochent <small>tous modes confondus</small></h3>
+      <div class="keys" id="keys"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+'use strict';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const KEY='ctmtap.v1';
+const nb='\u00a0';
+
+const SAMPLES=[
+ {title:'Le swing',text:"Le swing ne s'explique pas tout à fait, il se ressent. On peut écrire des croches inégales sur une partition, mais ce qui fait balancer un musicien tient surtout à la façon dont il place chaque note par rapport au temps. Un peu en avance, la phrase devient pressante. Un peu en retard, elle se détend et prend de l'ampleur. Les grands pianistes jouent avec cet espace comme on joue avec la lumière dans une pièce. Pour y arriver, il faut écouter beaucoup, chanter les lignes avant de les jouer et travailler lentement avec le métronome sur les temps deux et quatre. Le reste vient avec les années, les rencontres et les soirs où tout le groupe respire ensemble."},
+ {title:'Chiffres et signes',text:"Le 14 mars 2026, la facture no 4587 indiquait 3 pianos, 12 lutrins et 48 câbles, pour un total de 2 375,90 $ (taxes incluses). Livraison prévue entre 9 h 30 et 11 h 15 ; appelez le 514-555-0199 si le camion n'est pas là. Des questions ? Écrivez à info@exemple.ca ou passez au 1200, rue Sainte-Catherine, local 3B. Attention : 25 % du paiement est exigé d'avance, et le solde, 30 jours plus tard. « C'est noté ! » a répondu Julie, avant d'ajouter : « Et la banquette, elle arrive quand ? »"},
+ {title:'Phrases courtes',text:"Il pleut sur la ville. Le café est encore chaud. Paul lit le journal près de la fenêtre. Un chat traverse la rue sans regarder. La radio joue une vieille chanson. Marie ferme son parapluie et entre. Elle commande un thé et un croissant. Le serveur sourit. Dehors, les voitures avancent lentement. Le temps passe, doucement, comme chaque matin. Demain, il fera beau. Ou peut-être pas."},
+ {title:'Pangrammes',text:"Portez ce vieux whisky au juge blond qui fume. Buvez de ce whisky que le patron juge fameux. Voyez le brick géant que j'examine près du wharf. The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs. Portez ce vieux whisky au juge blond qui fume."}
+];
+const MODES=[['libre','Libre'],['corriger','Corriger'],['mort','Mort subite'],['sans','Sans retour'],['aveugle',"À l'aveugle"]];
+const MODE_NAME=Object.fromEntries(MODES);
+const MODE_ICON={libre:'✍️',corriger:'🧱',mort:'💀',sans:'➡️',aveugle:'🙈'};
+const MODE_LONG={
+ libre:"Les fautes s'affichent en rouge et sont comptées, mais vous continuez. Vous pouvez revenir en arrière pour corriger si vous voulez.",
+ corriger:"À la première faute, tout bloque : il faut effacer la lettre fautive avant de pouvoir continuer. Aucune faute ne reste derrière vous.",
+ mort:"Une seule faute et la partie est perdue. Visez la précision avant la vitesse.",
+ sans:"La touche Effacer est désactivée. Chaque faute reste dans le texte : on avance coûte que coûte, sans se corriger.",
+ aveugle:"Vos fautes ne s'affichent pas pendant la partie, tout a l'air juste. Vous découvrez votre précision seulement à la fin."
+};
+const MODE_TXT={
+ libre:"les fautes sont comptées, mais on continue. Effacer est permis.",
+ corriger:"une faute bloque tout : il faut l'effacer avant de continuer.",
+ mort:"une seule faute et la partie est perdue.",
+ sans:"pas de retour arrière : chaque faute reste dans le texte.",
+ aveugle:"vos fautes restent cachées jusqu'à la fin. Effacer est permis."
+};
+const DURS=[[0,'quand le texte est fini'],[30,'après 30 s'],[60,'après 1 min'],[120,'après 2 min']];
+const OPPS=[['none','personne'],['ghost','mon fantôme'],['hare','un lièvre']];
+const GKINDS=[['best','meilleur essai'],['last','dernier essai']];
+const HAREWS=[[30,'30 mots/min'],[45,'45 mots/min'],[60,'60 mots/min'],[80,'80 mots/min']];
+const LENS=[[0,'Tout le texte'],[50,'50 mots'],[100,'100'],[250,'250'],[500,'500']];
+const FROMS=[['debut','au début'],['hasard','au hasard'],['suite','à la suite']];
+
+const DEF={tab:'taper',mode:'libre',dur:0,opp:'none',ghostKind:'best',hareW:45,ghosts:{},text:SAMPLES[0].text,title:SAMPLES[0].title,len:0,from:'debut',next:0,
+ typo:true,noAcc:false,noCase:false,noPunct:false,pf:'tous',hist:[],keys:{}};
+function load(){const d=JSON.parse(JSON.stringify(DEF));try{const o=JSON.parse(localStorage.getItem(KEY)||'null');if(o&&typeof o==='object'){Object.assign(d,o);if(o.hare&&!o.opp){d.opp='hare';d.hareW=typeof o.hare==='number'?o.hare:45}delete d.hare}}catch(e){}return d}
+let S=load();
+let saveT;function save(now){clearTimeout(saveT);const f=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};if(now)f();else saveT=setTimeout(f,200)}
+
+/* ---------- Petits outils ---------- */
+const f0=n=>Math.round(n||0).toLocaleString('fr-CA');
+const pct=a=>Math.floor((a||0)*100+1e-9)+nb+'%';
+const prog=a=>Math.floor((a||0)*100)+nb+'%';
+const clock=s=>{s=Math.max(0,Math.round(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+const plural=(n,w)=>f0(n)+' '+w+(n>1?'s':'');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const showCh=c=>c===' '?'espace':c;
+function fmtMin(m){if(m<1)return Math.max(5,Math.round(m*12)*5)+nb+'s';if(m<10){const r=Math.round(m*2)/2;return Math.floor(r)+nb+'min'+(r%1?nb+'30':'')}return Math.round(m)+nb+'min'}
+function niceMax(v){v=Math.max(20,v);for(const x of [20,40,60,80,100,120,160,200,240,300,400])if(v<=x)return x;return Math.ceil(v/200)*200}
+const accB=a=>`<b class="${a>=.95?'ok':a<.9?'bad':''}">${pct(a)}</b>`;
+
+/* ---------- Texte : nettoyage ---------- */
+function simplify(t){
+ return t.replace(/[\u2018\u2019\u201A\u201B\u2032\u00B4`]/g,"'")
+  .replace(/[\u201C\u201D\u201E\u00AB\u00BB\u2033]/g,'"')
+  .replace(/[\u2010\u2011\u2012\u2013\u2014\u2015\u2212]/g,'-')
+  .replace(/\u2026/g,'...')
+  .replace(/[\u00A0\u202F\u2007\u2009\u200A\u2002\u2003\u2004\u2005\u2006]/g,' ')
+  .replace(/[\u200B\u200C\u200D\uFEFF]/g,'')
+  .replace(/\uFB01/g,'fi').replace(/\uFB02/g,'fl').replace(/\uFB00/g,'ff').replace(/\uFB03/g,'ffi').replace(/\uFB04/g,'ffl')
+  .replace(/œ/g,'oe').replace(/Œ/g,'Oe').replace(/æ/g,'ae').replace(/Æ/g,'Ae')
+  .replace(/[•·▪●◦]/g,'-');
+}
+function clean(raw){
+ let t=String(raw||'').replace(/\r/g,'').replace(/\u00AD/g,'');
+ t=t.replace(/(\p{Ll})-\n(\p{Ll})/gu,'$1$2');
+ if(S.typo)t=simplify(t);
+ if(S.noPunct)t=t.replace(/[^\p{L}\p{N}\s'\-]/gu,' ').replace(/(^|\s)[-']+(?=\s|$)/g,' ');
+ return t.replace(/\s+/g,' ').trim();
+}
+const strip=c=>c.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+function same(a,b){if(a===b)return true;if(S.noCase){a=a.toLowerCase();b=b.toLowerCase()}if(S.noAcc){a=strip(a);b=strip(b)}return a===b}
+
+function passage(){
+ let all=clean(S.text);
+ if(!all)all=clean(SAMPLES[0].text);
+ const w=all.split(' '), W=w.length;
+ let len=S.len&&S.len<W?S.len:W, start=0;
+ if(S.from==='hasard'&&len<W){
+  const c=[];for(let i=0;i<=W-len;i++)if(i===0||/[.!?]["')]?$/.test(w[i-1]))c.push(i);
+  start=c.length?c[Math.floor(Math.random()*c.length)]:Math.floor(Math.random()*(W-len+1));
+ }else if(S.from==='suite'){start=S.next||0;if(start>=W)start=0;len=Math.min(len,W-start)}
+ return {text:w.slice(start,start+len).join(' '),start,W};
+}
+
+/* ---------- Partie ---------- */
+const flow=$('#flow'), tbox=$('#tbox'), inp=$('#inp'), after=$('#after');
+let G=null, spans=[], timer=null, lastY=-1, dirty=false;
+
+function bestWpm(mode){let b=0;for(const h of S.hist)if(h.how!=='perdu'&&(!mode||h.mode===mode)&&h.wpm>b)b=h.wpm;return b}
+function hashTxt(t){let x=5381;for(let i=0;i<t.length;i++)x=((x<<5)+x+t.charCodeAt(i))|0;return (x>>>0).toString(36)+'.'+t.length}
+function oppOn(){return S.opp==='hare'||(S.opp==='ghost'&&!!G.gh)}
+function oppPos(t){
+ if(S.opp==='hare')return Math.min(G.n,S.hareW*5/60*t);
+ const tr=G.gh.tr;return Math.min(G.n,tr[Math.min(tr.length-1,Math.floor(t*5))]||0);
+}
+function oppWpm(){return S.opp==='hare'?S.hareW:(G.gh?G.gh.wpm:0)}
+const oppName=()=>S.opp==='hare'?'Lièvre':'Fantôme';
+const oppThe=()=>S.opp==='hare'?'le lièvre':'votre fantôme';
+const dLong=d=>new Date(d).toLocaleDateString('fr-CA',{day:'numeric',month:'long'});
+function saveGhost(st){
+ const k=hashTxt(G.text), rec=S.ghosts[k]||(S.ghosts[k]={});
+ const e={wpm:Math.round(st.wpm*10)/10,d:Date.now(),mode:S.mode,tr:G.tr.slice()};
+ rec.last=e;if(!rec.best||e.wpm>rec.best.wpm)rec.best=e;rec.u=Date.now();
+ const keys=Object.keys(S.ghosts);
+ if(keys.length>40)keys.sort((a,b)=>(S.ghosts[a].u||0)-(S.ghosts[b].u||0)).slice(0,keys.length-40).forEach(x=>delete S.ghosts[x]);
+}
+
+function newGame(same){
+ clearInterval(timer);
+ const p=same&&G?{text:G.text,start:G.ws,W:G.W}:passage();
+ const chars=Array.from(p.text);
+ G={text:p.text,chars,n:chars.length,ws:p.start,W:p.W,total:p.text.split(' ').length,ok:[],pos:0,good:0,t0:0,end:0,keys:0,errs:0,
+    errPos:new Set(),errT:[],blocked:false,over:null,samples:[],tr:[],pc:{},ghost:-1,last:null,record:false,beat:null,gh:null};
+ if(S.opp==='ghost'){const r=S.ghosts[hashTxt(p.text)];G.gh=r?(r[S.ghostKind]||r.best||null):null}
+ tbox.style.setProperty('--opp',S.opp==='ghost'?'var(--ghost)':'var(--hare)');
+ const f=document.createDocumentFragment();
+ spans=chars.map(c=>{const s=document.createElement('span');s.textContent=c;f.appendChild(s);return s});
+ flow.replaceChildren(f);paintAll();
+ buildLanes();
+ after.classList.remove('on');after.innerHTML='';
+ tbox.classList.remove('done','typing','ready');
+ meta();renderCard();updateLive();
+ requestAnimationFrame(()=>scrollFlow(true));
+}
+function meta(){
+ const part=G.total>=G.W?`${f0(G.W)} mots`:`mots ${f0(G.ws+1)} à ${f0(G.ws+G.total)} sur ${f0(G.W)}`;
+ $('#meta').innerHTML=`«${nb}${esc(S.title||'Sans titre')}${nb}» · ${part}`;
+}
+function cls(i){
+ let c='';
+ if(i<G.pos){const hide=S.mode==='aveugle'&&!G.over;c=(G.ok[i]||hide)?'ok':'x';if(G.ok[i]&&!hide&&G.errPos.has(i))c+=' fx'}
+ if(i===G.pos&&!G.over)c+=' cur';
+ if(i===G.ghost&&!G.over)c+=' gh';
+ return c;
+}
+function paint(i){if(i>=0&&i<spans.length)spans[i].className=cls(i)}
+function paintAll(){for(let i=0;i<spans.length;i++)paint(i)}
+function scrollFlow(force){
+ const s=spans[Math.min(G.pos,spans.length-1)];if(!s)return;
+ const lh=parseFloat(getComputedStyle(flow).lineHeight)||40;
+ const line=Math.floor((s.offsetTop+1)/lh), y=Math.max(0,(line-1)*lh);
+ if(y!==lastY||force){flow.style.transform=`translateY(${-y}px)`;lastY=y}
+}
+function bump(){tbox.classList.remove('shake');void tbox.offsetWidth;tbox.classList.add('shake')}
+tbox.addEventListener('animationend',()=>tbox.classList.remove('shake'));
+
+function typeChar(c){
+ if(!G||G.over||G.pos>=G.n)return;
+ if(G.blocked){bump();return}
+ if(!G.t0){G.t0=performance.now();tbox.classList.add('typing');timer=setInterval(step,200)}
+ const i=G.pos, t=G.chars[i], ok=same(c,t);
+ G.keys++;(G.pc[t]||(G.pc[t]=[0,0]))[0]++;
+ if(!ok){G.errs++;G.pc[t][1]++;G.errPos.add(i);G.errT.push((performance.now()-G.t0)/1000);G.last={exp:t,got:c,i};addTick(i)}
+ G.ok[i]=ok;G.pos++;if(ok)G.good++;
+ paint(i);paint(i+1);
+ if(!ok&&S.mode==='mort')return finish('perdu');
+ if(!ok&&S.mode==='corriger'){G.blocked=true;bump()}
+ if(G.pos>=G.n&&!G.blocked)return finish('fini');
+ scrollFlow();updateLive();
+}
+function back(word){
+ if(!G||G.over||G.pos===0)return;
+ if(S.mode==='sans'){bump();return}
+ let k=1;
+ if(word){let j=G.pos;while(j>0&&G.chars[j-1]===' ')j--;while(j>0&&G.chars[j-1]!==' ')j--;k=Math.max(1,G.pos-j)}
+ const old=G.pos;
+ for(let q=0;q<k;q++){G.pos--;if(G.ok[G.pos])G.good--}
+ G.ok.length=G.pos;G.blocked=false;
+ for(let i=G.pos;i<=old;i++)paint(i);
+ scrollFlow();updateLive();
+}
+function step(){
+ if(!G||G.over||!G.t0){clearInterval(timer);return}
+ const t=(performance.now()-G.t0)/1000;
+ while(G.samples.length<=Math.floor(t))G.samples.push(G.good);
+ while(G.tr.length<=Math.floor(t*5))G.tr.push(G.pos);
+ if(oppOn()){const g=Math.floor(oppPos(t));if(g!==G.ghost){const o=G.ghost;G.ghost=g;paint(o);paint(g)}}
+ if(S.dur&&t>=S.dur)return finish('temps');
+ updateLive();
+}
+function stats(){
+ if(!G.t0)return {sec:0,wpm:0,raw:0,acc:1,words:0,real:0};
+ const sec=((G.end||performance.now())-G.t0)/1000, min=sec/60;
+ let words=0;for(let i=0;i<G.pos;i++)if(G.chars[i]===' ')words++;if(G.pos>=G.n)words++;
+ return {sec,wpm:sec>=1?G.good/5/min:0,raw:sec>=1?G.pos/5/min:0,acc:G.keys?(G.keys-G.errs)/G.keys:1,words,real:sec>=1?words/min:0};
+}
+function wordAt(i){let w=1;for(let j=0;j<i;j++)if(G.chars[j]===' ')w++;return w}
+
+function finish(how){
+ if(G.over)return;
+ G.over=how;G.end=how==='temps'?G.t0+S.dur*1000:performance.now();clearInterval(timer);
+ G.samples.push(G.good);
+ const st=stats();
+ const old=G.ghost;G.ghost=-1;
+ G.tr.push(G.pos);
+ if(oppOn()){const hp=oppPos(st.sec);G.oppW=oppWpm();G.beat=how!=='perdu'&&(G.pos>=G.n?hp<G.n:G.pos>hp)}
+ if(how!=='perdu'&&G.keys>=5)saveGhost(st);
+ const prevBest=bestWpm();G.prevBest=prevBest;
+ if(G.keys>=5){
+  G.record=how!=='perdu'&&prevBest>0&&st.wpm>prevBest;
+  S.hist.push({d:Date.now(),wpm:Math.round(st.wpm*10)/10,raw:Math.round(st.raw*10)/10,acc:Math.round(st.acc*1000)/1000,errs:G.errs,keys:G.keys,
+   chars:G.pos,n:G.n,sec:Math.round(st.sec*10)/10,mode:S.mode,dur:S.dur,how,title:S.title||'Sans titre',opp:oppOn()?S.opp:'',oppW:oppOn()?Math.round(G.oppW):0,beat:G.beat});
+  if(S.hist.length>500)S.hist.splice(0,S.hist.length-500);
+  for(const [c,[a,e]] of Object.entries(G.pc)){const k=S.keys[c]||(S.keys[c]=[0,0]);k[0]+=a;k[1]+=e}
+ }
+ if(S.from==='suite'&&how!=='perdu'){S.next=G.ws+st.words;if(S.next>=G.W)S.next=0}
+ save(true);
+ paintAll();paint(old);scrollFlow();
+ tbox.classList.add('done');tbox.classList.remove('typing');
+ updateLive();showAfter(st);
+}
+
+/* ---------- Affichage live ---------- */
+function buildLanes(){
+ const L=[`<div class="lane" style="--c:var(--t1)"><span class="who"><i></i>Vous</span><div class="track"><div class="fill" id="fMe"></div><div class="ticks" id="ticks"></div></div><div class="val"><b id="vMe">0${nb}%</b><small id="sMe"></small></div></div>`];
+ if(oppOn())L.push(`<div class="lane" style="--c:var(${S.opp==='ghost'?'--ghost':'--hare'})"><span class="who"><i></i>${oppName()}</span><div class="track"><div class="fill" id="fHare"></div></div><div class="val"><b id="vHare">0${nb}%</b><small>${f0(oppWpm())} mots/min</small></div></div>`);
+ if(S.opp==='ghost'&&!G.gh)L.push(`<div class="lane" style="--c:var(--ghost)"><span class="who"><i></i>Fantôme</span><div class="track"></div><div class="val"><b>—</b><small>aucun essai ici</small></div></div>`);
+ if(S.dur)L.push(`<div class="lane" style="--c:var(--muted)"><span class="who"><i></i>Temps</span><div class="track"><div class="fill" id="fTime"></div></div><div class="val"><b id="vTime">0:00</b><small>sur ${clock(S.dur)}</small></div></div>`);
+ $('#lanes').innerHTML=L.join('');
+}
+function addTick(i){const t=$('#ticks');if(!t)return;const d=document.createElement('i');d.className='tk';d.style.left=(i/G.n*100)+'%';t.appendChild(d)}
+function updateLanes(st){
+ $('#fMe').style.width=(G.pos/G.n*100)+'%';$('#vMe').textContent=G.pos>=G.n?'100'+nb+'%':prog(G.pos/G.n);
+ $('#sMe').textContent=`${f0(G.pos)} / ${f0(G.n)} car.`;
+ if(oppOn()&&$('#fHare')){const hp=G.t0?oppPos(st.sec):0;$('#fHare').style.width=(hp/G.n*100)+'%';$('#vHare').textContent=hp>=G.n?'100'+nb+'%':prog(hp/G.n)}
+ if(S.dur&&$('#fTime')){$('#fTime').style.width=Math.min(100,st.sec/S.dur*100)+'%';$('#vTime').textContent=clock(Math.min(st.sec,S.dur))}
+ $('#ticks').classList.toggle('hid',S.mode==='aveugle'&&!G.over);
+}
+function hareLine(st){
+ if(!oppOn()||!G.t0)return '';
+ const d=Math.round((G.pos-oppPos(st.sec))/5);
+ if(d===0)return `au coude-à-coude avec ${oppThe()}`;
+ return d>0?`${plural(d,'mot')} d'avance sur ${oppThe()}`:`${plural(-d,'mot')} de retard sur ${oppThe()}`;
+}
+function updateLive(){
+ const st=stats();let h,sub;
+ if(!G.t0){
+  h=`Prêt ? Le chrono part à la <b>première touche</b>.`;
+  sub=`Cliquez sur Jouer, ou commencez simplement à taper.`;
+ }else if(!G.over){
+  h=S.mode==='aveugle'?`Vous tapez à <b>${f0(st.wpm)} mots/min</b>. Vos fautes restent cachées jusqu'à la fin.`
+   :`Vous tapez à <b>${f0(st.wpm)} mots/min</b> avec ${accB(st.acc)} de précision.`;
+  sub=[S.mode!=='aveugle'?plural(G.errs,'faute'):null,`${clock(st.sec)} écoulé`+(S.dur?` sur ${clock(S.dur)}`:''),G.blocked?'effacez la faute pour continuer':null,hareLine(st)].filter(Boolean).join(' · ');
+ }else{
+  const best=bestWpm();
+  const hareTxt=oppOn()?(G.beat?` Vous avez battu ${oppThe()} (${f0(G.oppW)} mots/min).`:` ${S.opp==='hare'?'Le lièvre':'Votre fantôme'} (${f0(G.oppW)} mots/min) a gagné.`):'';
+  if(G.over==='perdu'){
+   h=`Perdu au mot <b class="bad">${f0(wordAt(G.last.i))}</b> sur ${f0(G.total)}.`;
+   sub=`«${nb}${esc(showCh(G.last.exp))}${nb}» attendu, «${nb}${esc(showCh(G.last.got))}${nb}» tapé. Avant la faute, vous tapiez à ${f0(st.wpm)} mots/min.`;
+  }else{
+   const lead=G.over==='temps'?'Temps écoulé : ':G.record?'Nouveau record ! ':'Terminé : ';
+   h=`${lead}<b>${f0(st.wpm)} mots/min</b> avec ${accB(st.acc)} de précision.`;
+   sub=`${plural(G.errs,'faute')} sur ${f0(G.keys)} frappes en ${clock(st.sec)} · ${f0(st.real)} mots du texte par minute.`+hareTxt+(!G.record&&G.prevBest?` Votre record : ${f0(Math.max(G.prevBest,best))} mots/min.`:'');
+  }
+ }
+ $('#vTaper').innerHTML=h+`<div class="sub">${sub}</div>`;
+ updateLanes(st);
+}
+
+/* ---------- Carte de départ et barre d'état ---------- */
+function oppCardLine(){
+ if(S.opp==='none')return `<span>🏁 Contre : <b>personne</b></span>`;
+ if(S.opp==='hare')return `<span>🐇 Contre : <b>un lièvre à ${S.hareW} mots/min</b>, qui avance à vitesse constante</span>`;
+ if(G.gh)return `<span>👻 Contre : <b>votre ${S.ghostKind==='best'?'meilleur':'dernier'} essai</b> sur ce passage (${f0(G.gh.wpm)} mots/min, le ${dLong(G.gh.d)}), rejoué frappe par frappe</span>`;
+ return `<span class="note">👻 Pas encore de fantôme pour ce passage : jouez une fois, puis « Recommencer » pour l'affronter.</span>`;
+}
+function renderCard(){
+ $('#modeInfo').innerHTML=`<b>${MODE_ICON[S.mode]} ${MODE_NAME[S.mode]}</b> — ${MODE_LONG[S.mode]}`;
+ const oi=$('#oppInfo');oi.classList.remove('warn');
+ if(S.opp==='hare')oi.innerHTML=`🐇 Le lièvre avance à <b>${S.hareW} mots/min</b>, sans jamais ralentir. Il est surligné en orange dans le texte.`;
+ else if(S.opp==='ghost'&&G.gh)oi.innerHTML=`👻 Votre fantôme rejoue votre <b>${S.ghostKind==='best'?'meilleur':'dernier'} essai</b> sur ce passage (${f0(G.gh.wpm)} mots/min, le ${dLong(G.gh.d)}), frappe par frappe. Il est surligné en violet dans le texte.`;
+ else if(S.opp==='ghost'){oi.classList.add('warn');oi.innerHTML=`👻 <b>Pas encore de fantôme pour ce passage.</b> Terminez d'abord une partie sur ce texte (une partie perdue ne compte pas), puis cliquez sur « Recommencer » pour l'affronter.`}
+ else oi.innerHTML='';
+ $('#start').innerHTML=`<div class="playbox"><button class="btn pri" id="bPlay">▶ Jouer</button><span>ou commencez simplement à taper</span></div>`;
+ const bp=$('#bPlay');bp.onclick=e=>{e.stopPropagation();tbox.classList.add('ready');focusIn()};
+ bp.onmousedown=e=>e.stopPropagation();
+ $('#status').innerHTML=`<span><b>${MODE_ICON[S.mode]} ${MODE_NAME[S.mode]}</b> — ${MODE_TXT[S.mode]}</span>
+  <span class="keys"><span class="kbd">Échap</span> recommence${S.mode==='sans'?'':` · <span class="kbd">⌥ ⌫</span> efface un mot`} · <span class="kbd">Entrée</span> passage suivant (à la fin)</span>`;
+}
+
+/* ---------- Après la partie ---------- */
+function badWords(){
+ const out=[];let s=0;
+ for(let i=0;i<=G.pos&&i<=G.n;i++){
+  if(i===G.n||G.chars[i]===' '||i===G.pos){
+   let bad=G.errPos.has(i)&&i<G.pos;
+   for(let j=s;j<i&&!bad;j++)if(G.errPos.has(j))bad=true;
+   if(bad){const w=G.chars.slice(s,i).join('').replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu,'')||G.chars.slice(s,i).join('');if(w&&!out.includes(w))out.push(w)}
+   if(i===G.pos)break;
+   s=i+1;
+  }
+ }
+ return out.slice(0,18);
+}
+function canNext(){return S.len&&S.len<G.W&&S.from!=='debut'}
+function showAfter(st){
+ const pills=[];
+ if(G.over==='perdu')pills.push(`<span class="pill bad">✕ Perdu au mot ${f0(wordAt(G.last.i))}</span>`);
+ else pills.push(`<span class="pill ok">${G.over==='temps'?'⏱ Temps écoulé':'✓ Terminé'} · ${f0(st.wpm)} mots/min</span>`);
+ if(G.record)pills.push(`<span class="pill ok">★ Record</span>`);
+ if(oppOn())pills.push(G.beat?`<span class="pill ok">${oppName()} battu</span>`:`<span class="pill bad">${S.opp==='hare'?'Le lièvre':'Votre fantôme'} a gagné</span>`);
+ if(S.opp==='ghost'&&!G.gh)pills.push(`<span class="pill ok">👻 Fantôme enregistré : « Recommencer » pour l'affronter</span>`);
+ const bw=badWords();
+ after.innerHTML=`<div class="after-top"><div class="row" style="margin:0">${pills.join('')}</div>
+  <div class="row" style="margin:0"><button class="btn" data-act="again">↻ Recommencer</button>${canNext()?'<button class="btn pri" data-act="next">Passage suivant →</button>':''}</div></div>
+  <h3>Vitesse pendant le test <small>traits rouges sous l'axe : vos fautes</small></h3><div id="chSpeed"></div>
+  ${bw.length?`<h3>Mots qui ont accroché</h3><div class="words">${bw.map(w=>`<span class="chip">${esc(w)}</span>`).join('')}</div>`:''}`;
+ after.classList.add('on');
+ drawSpeed();
+}
+after.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;newGame(b.dataset.act==='again');focusIn()});
+
+function drawSpeed(){
+ const box=$('#chSpeed');if(!box||!box.clientWidth)return;
+ const st=stats(), sm=G.samples, sec=Math.max(st.sec,.1);
+ const pts=[];for(let k=1;k<sm.length;k++){const w=Math.min(k,4);pts.push([Math.min(k,sec),Math.max(0,(sm[k]-sm[k-w])/5/(w/60))])}
+ if(pts.length<3){box.innerHTML='<div class="empty">Test trop court pour tracer une courbe.</div>';return}
+ const W=Math.max(280,Math.round(box.clientWidth)), L=40,R=14,T=24,B=30, H=Math.round(Math.min(230,Math.max(165,W*.27))), ph=H-T-B, cw=W-L-R;
+ const ymax=niceMax(Math.max(st.wpm,...pts.map(p=>p[1]))*1.1);
+ const X=t=>L+t/sec*cw, Y=v=>T+ph-v/ymax*ph;
+ let s='';
+ for(let k=0;k<=4;k++){const v=ymax*k/4,y=Y(v);s+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" style="stroke:var(--line)" stroke-dasharray="${k?'3 4':''}"/><text x="${L-8}" y="${y+4}" text-anchor="end">${f0(v)}</text>`}
+ const stp=sec<=20?5:sec<=60?10:sec<=150?30:sec<=400?60:120;
+ for(let t=stp;t<sec;t+=stp){const x=X(t);if(x>W-R-60)break;s+=`<text x="${x}" y="${T+ph+24}" text-anchor="middle">${clock(t)}</text>`}
+ const line=pts.map(p=>X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1)).join(' L');
+ s+=`<path d="M${X(pts[0][0]).toFixed(1)} ${Y(0)} L${line} L${X(pts.at(-1)[0]).toFixed(1)} ${Y(0)} Z" style="fill:var(--t1);opacity:.12"/>`;
+ s+=`<path d="M${line}" style="fill:none;stroke:var(--t1);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round"/>`;
+ const ya=Y(st.wpm);
+ s+=`<line x1="${L}" x2="${W-R}" y1="${ya}" y2="${ya}" style="stroke:var(--t1);opacity:.7" stroke-dasharray="6 5"/><text x="${W-R}" y="${ya-7}" text-anchor="end" style="fill:var(--t1);font-weight:800">moyenne ${f0(st.wpm)}</text>`;
+ for(const t of G.errT)s+=`<line x1="${X(Math.min(t,sec))}" x2="${X(Math.min(t,sec))}" y1="${T+ph+3}" y2="${T+ph+10}" style="stroke:var(--bad);stroke-width:2"/>`;
+ s+=`<text x="${L}" y="${T-10}">Mots/min ↑</text><text x="${W-R}" y="${T+ph+24}" text-anchor="end">Temps →</text>`;
+ box.innerHTML=`<svg class="chart" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${s}</svg>`;
+}
+
+/* ---------- Saisie clavier ---------- */
+let composing=false;
+function focusIn(){inp.focus({preventScroll:true})}
+function flush(){
+ const v=inp.value;inp.value='';if(!v)return;
+ for(const ch of (S.typo?simplify(v):v)){if(ch==='\n'||ch==='\t')continue;typeChar(ch)}
+}
+inp.addEventListener('keydown',e=>{
+ if(e.key==='Escape'||e.key==='Tab'){e.preventDefault();newGame(true);return}
+ if(e.key==='Enter'){e.preventDefault();if(G.over)newGame(!canNext());return}
+ if(composing||e.isComposing)return;
+ if(e.key==='Backspace'){e.preventDefault();back(e.altKey||e.ctrlKey||e.metaKey);return}
+ if(G.over&&e.key.length===1&&!e.metaKey&&!e.ctrlKey)e.preventDefault();
+});
+inp.addEventListener('compositionstart',()=>{composing=true});
+inp.addEventListener('compositionend',()=>{composing=false;flush()});
+inp.addEventListener('input',e=>{if(composing||e.isComposing)return;flush()});
+inp.addEventListener('focus',()=>tbox.classList.add('focus'));
+inp.addEventListener('blur',()=>tbox.classList.remove('focus'));
+tbox.addEventListener('mousedown',e=>{e.preventDefault();focusIn()});
+document.addEventListener('keydown',e=>{
+ if(S.tab!=='taper'||document.activeElement===inp)return;
+ const tag=document.activeElement&&document.activeElement.tagName;
+ if(tag==='INPUT'||tag==='TEXTAREA'||e.metaKey||e.ctrlKey)return;
+ if(e.key==='Escape'){e.preventDefault();newGame(true);focusIn();return}
+ if(e.key.length===1||e.key==='Backspace')focusIn();
+});
+
+/* ---------- Segments ---------- */
+function seg(el,opts,get,set){
+ el.innerHTML=opts.map(([v,l])=>`<button type="button" data-v="${v}">${l}</button>`).join('');
+ const sync=()=>[...el.children].forEach(b=>b.classList.toggle('on',String(get())===b.dataset.v));
+ el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const r=b.dataset.v;set(isNaN(+r)?r:+r);sync()});
+ sync();return sync;
+}
+const restartSame=()=>{save();newGame(true);focusIn()};
+seg($('#segMode'),MODES,()=>S.mode,v=>{S.mode=v;restartSame()});
+seg($('#segDur'),DURS,()=>S.dur,v=>{S.dur=v;restartSame()});
+function syncOppSub(){$('#segGk').style.display=S.opp==='ghost'?'':'none';$('#segHw').style.display=S.opp==='hare'?'':'none'}
+seg($('#segOpp'),OPPS,()=>S.opp,v=>{S.opp=v;syncOppSub();restartSame()});
+seg($('#segGk'),GKINDS,()=>S.ghostKind,v=>{S.ghostKind=v;restartSame()});
+seg($('#segHw'),HAREWS,()=>S.hareW,v=>{S.hareW=v;restartSame()});
+syncOppSub();
+$$('#segMode button').forEach(b=>b.title=MODE_LONG[b.dataset.v]);
+
+/* ---------- Onglet Texte ---------- */
+const src=$('#src'), ttl=$('#ttl');
+src.value=S.text;ttl.value=S.title;
+function markDirty(){dirty=true;S.next=0;save();updateTexte();syncEx()}
+src.addEventListener('input',()=>{S.text=src.value;markDirty()});
+ttl.addEventListener('input',()=>{S.title=ttl.value;dirty=true;save()});
+const syncEx=seg($('#segEx'),SAMPLES.map((s,i)=>[i,s.title]),()=>{const i=SAMPLES.findIndex(s=>s.text===S.text);return i<0?'':i},i=>{S.text=SAMPLES[i].text;S.title=SAMPLES[i].title;src.value=S.text;ttl.value=S.title;markDirty()});
+seg($('#segLen'),LENS,()=>S.len,v=>{S.len=v;markDirty()});
+seg($('#segFrom'),FROMS,()=>S.from,v=>{S.from=v;markDirty()});
+const TOGS=[['typo','Typographie simplifiée (’ « — … œ)'],['noAcc','Ignorer les accents'],['noCase','Ignorer les majuscules'],['noPunct','Sans ponctuation']];
+$('#togs').innerHTML=TOGS.map(([k,l])=>`<button type="button" class="tog" data-k="${k}">${l}</button>`).join('');
+function syncTogs(){$$('.tog').forEach(b=>b.classList.toggle('on',!!S[b.dataset.k]))}
+$('#togs').addEventListener('click',e=>{const b=e.target.closest('.tog');if(!b)return;S[b.dataset.k]=!S[b.dataset.k];syncTogs();dirty=true;save();updateTexte()});
+syncTogs();
+
+function recentAvg(){const d=S.hist.filter(h=>h.how!=='perdu').slice(-5);return d.length?d.reduce((a,h)=>a+h.wpm,0)/d.length:0}
+function updateTexte(){
+ const all=clean(S.text), W=all?all.split(' ').length:0;
+ let h,sub='';
+ if(!W){h=`Le texte est <b>vide</b>.`;sub=`Collez-en un, importez un fichier ou choisissez un exemple.`;$('#prev').textContent='';}
+ else{
+  const avg=recentAvg(), sp=Math.round(avg||40), part=S.len&&S.len<W, len=part?S.len:W;
+  const min=(all.length*len/W)/5/sp;
+  h=part?`Votre texte fait <b>${f0(W)} mots</b>. Chaque test en prend <b>${f0(len)}</b>, soit environ <b>${fmtMin(min)}</b> à ${sp} mots/min.`
+        :`Votre texte fait <b>${f0(W)} mots</b>, soit environ <b>${fmtMin(min)}</b> de frappe à ${sp} mots/min.`;
+  if(!avg)sub='40 mots/min est une vitesse moyenne ; l\'estimation s\'ajustera à la vôtre après quelques tests. ';
+  if(part){
+   if(S.from==='suite')sub+=`À la suite : ${Math.ceil(W/len)} passages pour faire tout le texte. Le prochain commence au mot ${f0((S.next||0)%W+1)}.`;
+   else if(S.from==='hasard')sub+=`Chaque test pioche un passage au hasard, à partir d'un début de phrase.`;
+   else sub+=`Chaque test reprend le début du texte.`;
+  }else if(W>1000)sub+=`Texte long : choisissez plutôt un passage de 100 ou 250 mots.`;
+  $('#prev').textContent=all.slice(0,700);
+ }
+ $('#vTexte').innerHTML=h+`<div class="sub">${sub}</div>`;
+}
+
+function msg(t,bad){const m=$('#msg');m.textContent=t;m.classList.toggle('bad',!!bad)}
+function setText(t,title){t=t.trim();src.value=t;S.text=t;if(title!=null){S.title=title;ttl.value=title}markDirty()}
+function loadScript(u){return new Promise((ok,ko)=>{const s=document.createElement('script');s.src=u;s.onload=ok;s.onerror=ko;document.head.appendChild(s)})}
+const PDFJS='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+async function readPdf(f){
+ if(!window.pdfjsLib){await loadScript(PDFJS+'pdf.min.js');pdfjsLib.GlobalWorkerOptions.workerSrc=PDFJS+'pdf.worker.min.js'}
+ const doc=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;
+ const pages=Math.min(doc.numPages,80);let a='',b='';
+ for(let p=1;p<=pages;p++){
+  const c=await (await doc.getPage(p)).getTextContent();
+  for(const it of c.items){if(!('str' in it))continue;a+=it.str+(it.hasEOL?'\n':'');b+=it.str+(it.hasEOL?'\n':' ')}
+  a+='\n';b+='\n';
+ }
+ const spaces=(a.match(/\s/g)||[]).length/Math.max(1,a.length);
+ return {text:spaces<.08?b:a,cut:doc.numPages>pages,pages:doc.numPages};
+}
+async function readDocx(f){
+ const buf=new Uint8Array(await f.arrayBuffer()), dv=new DataView(buf.buffer);
+ let e=buf.length-22;while(e>=0&&dv.getUint32(e,true)!==0x06054b50)e--;if(e<0)throw new Error('zip');
+ const cnt=dv.getUint16(e+10,true);let p=dv.getUint32(e+16,true);const td=new TextDecoder();
+ for(let i=0;i<cnt;i++){
+  const method=dv.getUint16(p+10,true), csize=dv.getUint32(p+20,true), nl=dv.getUint16(p+28,true), xl=dv.getUint16(p+30,true), cl=dv.getUint16(p+32,true), off=dv.getUint32(p+42,true);
+  const name=td.decode(buf.subarray(p+46,p+46+nl));
+  if(name==='word/document.xml'){
+   const st=off+30+dv.getUint16(off+26,true)+dv.getUint16(off+28,true), data=buf.subarray(st,st+csize);
+   const xml=method===0?td.decode(data):await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+   const d=new DOMParser().parseFromString(xml,'application/xml'), NS='http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+   return [...d.getElementsByTagNameNS(NS,'p')].map(q=>[...q.getElementsByTagNameNS(NS,'t')].map(t=>t.textContent).join('')).join('\n');
+  }
+  p+=46+nl+xl+cl;
+ }
+ throw new Error('docx');
+}
+async function importFile(f){
+ if(!f)return;
+ msg(`Lecture de «${nb}${f.name}${nb}»…`);
+ try{
+  const ext=(f.name.split('.').pop()||'').toLowerCase();let t,extra='';
+  if(ext==='pdf'||f.type==='application/pdf'){const r=await readPdf(f);t=r.text;if(r.cut)extra=` (80 premières pages sur ${r.pages})`}
+  else if(ext==='docx')t=await readDocx(f);
+  else if(ext==='html'||ext==='htm'){const d=new DOMParser().parseFromString(await f.text(),'text/html');t=d.body?d.body.textContent:''}
+  else t=await f.text();
+  if(!t||!t.trim())throw new Error('vide');
+  setText(t,f.name.replace(/\.[^.]+$/,''));
+  msg(`«${nb}${f.name}${nb}» importé : ${f0(clean(t).split(' ').length)} mots${extra}.`);
+ }catch(err){msg(ext0(f)==='pdf'&&!window.pdfjsLib?'Impossible de charger le lecteur PDF (connexion Internet requise).':'Impossible de lire ce fichier. Copiez-collez le texte à la place.',true)}
+}
+const ext0=f=>(f.name.split('.').pop()||'').toLowerCase();
+$('#bImport').onclick=()=>$('#fileIn').click();
+$('#fileIn').onchange=e=>{importFile(e.target.files[0]);e.target.value=''};
+$('#bPaste').onclick=async()=>{try{const t=await navigator.clipboard.readText();if(t.trim()){setText(t,'Texte collé');msg(`Texte collé : ${f0(clean(t).split(' ').length)} mots.`)}else msg('Le presse-papiers est vide.',true)}catch(e){msg('Cliquez dans la zone et collez avec ⌘V.',true)}};
+$('#bClear').onclick=()=>{setText('','');src.focus();msg('')};
+$('#bGo').onclick=()=>{location.hash='#taper'};
+const drop=$('#drop');
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('drop')}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();if(ev==='dragleave'&&drop.contains(e.relatedTarget))return;drop.classList.remove('drop')}));
+drop.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)importFile(f)});
+
+/* ---------- Onglet Progrès ---------- */
+seg($('#segPf'),[['tous','Tous les modes'],...MODES],()=>S.pf,v=>{S.pf=v;save();renderProgress()});
+$('#bWipe').onclick=()=>{if(confirm('Effacer tout l\'historique et les statistiques de touches ?')){S.hist=[];S.keys={};save(true);renderProgress()}};
+const filtered=()=>S.hist.filter(h=>S.pf==='tous'||h.mode===S.pf);
+const dShort=d=>new Date(d).toLocaleDateString('fr-CA',{day:'numeric',month:'short'});
+function renderProgress(){
+ if(S.tab!=='progres')return;
+ const H0=filtered(), done=H0.filter(h=>h.how!=='perdu');
+ let h,sub;
+ if(!H0.length){h=`Aucun test pour l'instant.`;sub=`Faites un premier test dans l'onglet Taper : vos résultats s'afficheront ici.`}
+ else{
+  const best=Math.max(0,...done.map(x=>x.wpm)), k=Math.min(5,Math.floor(done.length/2));
+  h=done.length?`Votre record : <b>${f0(best)} mots/min</b>.`:`Toutes vos parties de ce mode sont perdues pour l'instant.`;
+  if(k>=1){
+   const av=a=>a.reduce((s,x)=>s+x.wpm,0)/a.length, first=av(done.slice(0,k)), last=av(done.slice(-k)), d=Math.round(last-first);
+   h+=` Vos ${k} derniers tests font <b>${f0(last)}</b> en moyenne, soit <b class="${d>0?'ok':d<0?'bad':''}">${d>0?'+':''}${f0(d)}</b> par rapport à vos ${k} premiers.`;
+  }
+  const accAvg=H0.reduce((s,x)=>s+x.acc,0)/H0.length, tot=H0.reduce((s,x)=>s+x.sec,0), lost=H0.length-done.length;
+  sub=`${plural(H0.length,'test')} · précision moyenne ${pct(accAvg)} · ${fmtMin(tot/60)} de pratique`+(lost?` · ${plural(lost,'partie')} perdue${lost>1?'s':''}`:'');
+ }
+ $('#vProg').innerHTML=h+`<div class="sub">${sub}</div>`;
+ drawHist(H0.slice(-40));
+ drawKeys();
+}
+function drawHist(list){
+ const box=$('#hist');
+ if(!list.length){box.innerHTML='<div class="empty">Rien à afficher pour ce mode.</div>';return}
+ const W=Math.max(300,Math.round(box.clientWidth)), L=46,R=16,T=24, ph=Math.round(Math.min(220,Math.max(150,W*.25))), gap=14, sh=34, B=26, H=T+ph+gap+sh+B;
+ const cw=W-L-R, stepX=cw/list.length, X=i=>L+stepX*(i+.5);
+ const ymax=niceMax(Math.max(...list.map(h=>h.wpm))*1.12), Y=v=>T+ph-v/ymax*ph;
+ let s='';
+ for(let k=0;k<=4;k++){const v=ymax*k/4,y=Y(v);s+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" style="stroke:var(--line)" stroke-dasharray="${k?'3 4':''}"/><text x="${L-8}" y="${y+4}" text-anchor="end">${f0(v)}</text>`}
+ s+=`<text x="${L}" y="${T-10}">Mots/min ↑</text>`;
+ const pts=list.map((h,i)=>[X(i),Y(h.wpm),h]).filter(p=>p[2].how!=='perdu');
+ if(pts.length>1)s+=`<path d="M${pts.map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' L')}" style="fill:none;stroke:var(--t3);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round"/>`;
+ const sy=T+ph+gap;
+ s+=`<text x="${L-8}" y="${sy+sh/2+4}" text-anchor="end">Préc.</text><line x1="${L}" x2="${W-R}" y1="${sy+sh}" y2="${sy+sh}" style="stroke:var(--line)"/>`;
+ const bw=Math.max(3,Math.min(16,stepX*.55));
+ list.forEach((h,i)=>{const a=Math.max(0,Math.min(1,(h.acc-.8)/.2)), bh=Math.max(2,a*sh), col=h.acc>=.95?'var(--ok)':h.acc<.9?'var(--bad)':'var(--t3)';
+  s+=`<rect x="${(X(i)-bw/2).toFixed(1)}" y="${(sy+sh-bh).toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" rx="3" style="fill:${col};opacity:.85"/>`});
+ let bi=-1,bv=-1;list.forEach((h,i)=>{if(h.how!=='perdu'&&h.wpm>bv){bv=h.wpm;bi=i}});
+ list.forEach((h,i)=>{const lost=h.how==='perdu';s+=`<circle cx="${X(i).toFixed(1)}" cy="${Y(h.wpm).toFixed(1)}" r="${i===bi?6.5:4.5}" style="fill:${lost?'var(--surface)':'var(--t3)'};stroke:${lost?'var(--bad)':'var(--surface)'};stroke-width:2"/>`});
+ if(bi>=0){const x=Math.min(W-R-40,Math.max(L+40,X(bi)));s+=`<text x="${x}" y="${Y(bv)-12}" text-anchor="middle" style="fill:var(--t3);font-weight:800">record ${f0(bv)}</text>`}
+ s+=`<text x="${L}" y="${H-6}">${dShort(list[0].d)}</text><text x="${W-R}" y="${H-6}" text-anchor="end">${dShort(list.at(-1).d)} →</text>`;
+ list.forEach((h,i)=>{s+=`<rect class="hit" data-i="${i}" x="${(X(i)-stepX/2).toFixed(1)}" y="${T}" width="${stepX.toFixed(1)}" height="${ph+gap+sh}" style="fill:transparent;cursor:pointer"/>`});
+ box.innerHTML=`<svg class="chart" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${s}</svg><div class="tip" id="tip"></div>`;
+ const tip=$('#tip'), sc=()=>box.clientWidth/W;
+ const showTip=e=>{const r=e.target.closest&&e.target.closest('.hit');if(!r){tip.classList.remove('on');return}
+  const i=+r.dataset.i,h=list[i];
+  tip.innerHTML=`<b>${f0(h.wpm)} mots/min</b> · ${pct(h.acc)}${h.how==='perdu'?' · perdu':''}<br><small>${MODE_NAME[h.mode]||h.mode} · ${plural(h.errs,'faute')} · ${clock(h.sec)}${h.opp?` · ${h.opp==='ghost'?'fantôme':'lièvre'} ${h.beat?'battu':'gagnant'}`:h.hare?` · lièvre ${h.beat?'battu':'gagnant'}`:''}<br>«${nb}${esc(h.title)}${nb}» · ${new Date(h.d).toLocaleString('fr-CA',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</small>`;
+  const tw=tip.offsetWidth/2, x=Math.min(box.clientWidth-tw,Math.max(tw,X(i)*sc()));
+  tip.style.left=x+'px';tip.style.top=(Y(h.wpm)*sc())+'px';tip.classList.add('on')};
+ box.onpointermove=showTip;box.onclick=showTip;box.onpointerleave=()=>tip.classList.remove('on');
+}
+function drawKeys(){
+ const ks=Object.entries(S.keys).filter(([c,[a,e]])=>a>=5&&e>0).map(([c,[a,e]])=>({c,a,e,r:e/a})).sort((x,y)=>y.r-x.r).slice(0,12);
+ const box=$('#keys');
+ if(!ks.length){box.innerHTML='<div class="empty" style="grid-column:1/-1">Pas encore assez de fautes pour repérer une touche difficile. Bonne nouvelle !</div>';return}
+ const mx=ks[0].r;
+ box.innerHTML=ks.map(k=>`<div class="key"><span class="cap${k.c===' '?' sp':''}">${k.c===' '?'espace':esc(k.c)}</span><b>${pct(k.r)}</b><small>${plural(k.e,'faute')} sur ${f0(k.a)}</small><div class="mini"><i style="width:${(k.r/mx*100).toFixed(1)}%"></i></div></div>`).join('');
+}
+
+/* ---------- Onglets ---------- */
+function show(t){
+ if(!['taper','texte','progres'].includes(t))t='taper';
+ if(S.tab==='taper'&&t!=='taper'&&G&&G.t0&&!G.over){clearInterval(timer);G.abandon=true}
+ S.tab=t;save();
+ $$('.scene').forEach(s=>s.classList.toggle('on',s.id==='s-'+t));
+ $$('.tab').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+ if(location.hash!=='#'+t)history.replaceState(null,'','#'+t);
+ if(t==='taper'){if(dirty||!G||G.abandon){const keep=!!(G&&G.abandon&&!dirty);dirty=false;newGame(keep)}else{requestAnimationFrame(()=>{scrollFlow(true);if(after.classList.contains('on'))drawSpeed()})}setTimeout(focusIn,0)}
+ if(t==='texte')updateTexte();
+ if(t==='progres')renderProgress();
+}
+$$('.tab').forEach(b=>b.onclick=()=>{location.hash='#'+b.dataset.t});
+$$('[data-go]').forEach(a=>a.onclick=()=>{location.hash='#'+a.dataset.go});
+window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
+let rzT;window.addEventListener('resize',()=>{clearTimeout(rzT);rzT=setTimeout(()=>{if(S.tab==='taper'){scrollFlow(true);if(after.classList.contains('on'))drawSpeed()}if(S.tab==='progres')renderProgress()},120)});
+
+newGame();
+show(location.hash.slice(1)||'taper');
+</script>
+</body>
+</html>
